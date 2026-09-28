@@ -35,7 +35,12 @@ const ACTS=[{r:1},{r:1,j:1},{r:1,j:1,short:1},{},{l:1},{l:1,j:1},{r:1,f:1}];
 function solve(li,level){
   G.level=level;M.quiet(true);M.build(li);M.start();
   let beam=[{snap:M.snap(),prevJ:false}],best=0,stall=0,gen=0;
-  const score=s=>s.p.x-(3-s.hearts)*700-(s.falls||0)*500+s.p.power*60;
+  // falling with nothing below is worth nothing: otherwise the greedy beam
+  // prefers leaping into the void (briefly further right) over waiting for a platform
+  const void_=s=>{if(s.p.on||s.p.vy<=0)return false;const x0=Math.floor(s.p.x/T),x1=Math.floor((s.p.x+s.p.w)/T),ty=Math.floor((s.p.y+s.p.h)/T);
+    for(let x=x0-1;x<=x1+1;x++)for(let y=Math.max(0,ty);y<15;y++){const c=M.tile(x,y);if(c!==' '&&c!=='K')return false;}
+    return !s.plats.some(p=>p.y>=s.p.y+s.p.h-4&&p.x<s.p.x+s.p.w+150&&p.x+p.w>s.p.x-150);};
+  const score=s=>s.p.x-(3-s.hearts)*700-(s.falls||0)*500+s.p.power*60-(void_(s)?2000:0);
   while(gen++<2500){
     const next=new Map();
     for(const node of beam)for(const a of ACTS){
@@ -51,7 +56,7 @@ function solve(li,level){
     }
     beam=[...next.values()].sort((a,b)=>b.sc-a.sc).slice(0,48);
     if(!beam.length)return {ok:false,gen,why:'every branch died'};
-    if(beam[0].sc>best+1){best=beam[0].sc;stall=0;}else if(++stall>160){M.load(beam[0].snap);return {ok:false,gen,why:'stuck at x='+Math.round(M.state().p.x/T)+' tiles'};}
+    if(beam[0].sc>best+1){best=beam[0].sc;stall=0;}else if(++stall>300){M.load(beam[0].snap);return {ok:false,gen,why:'stuck at x='+Math.round(M.state().p.x/T)+' tiles'};}
   }
   return {ok:false,gen,why:'too long'};
 }
@@ -63,6 +68,7 @@ for(const level of [1,2])G.LEVELS.forEach((lv,li)=>{
   assert(r.ok,lv.name+' not finishable at level '+level+': '+r.why);
 });
 if(only&&only!=='quick')process.exit(0);
+delete G.save.mario;M.quiet(false);   // the bot really cleared the levels: start the rule checks from a fresh save
 
 // ---- the passive player never finishes, and in Grande gets hurt by what walks at him
 for(const level of [1,2])G.LEVELS.forEach((lv,li)=>{
