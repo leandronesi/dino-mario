@@ -1,0 +1,30 @@
+{
+  "name": "Dino Mario",
+  "short_name": "Dino Mario",
+  "description": "Salta sulle piattaforme, schiaccia gli scarabei e arriva alla bandiera.",
+  "lang": "it",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "id": "/dino-mario/",
+  "display": "fullscreen",
+  "display_override": [
+    "fullscreen",
+    "standalone"
+  ],
+  "orientation": "landscape",
+  "background_color": "#183f37",
+  "theme_color": "#183f37",
+  "categories": [
+    "games",
+    "kids"
+  ],
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
