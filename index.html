@@ -1992,8 +1992,11 @@ html, body {
     });
     acc = 0;
   }
+  /* The floor a dino is (re)born on: scanned from the BOTTOM, the first
+     standable tile with air above it. Scanning from the top found the cave
+     ceiling and put the dino on the roof of La Grotta for the whole level. */
   function groundBelow(tx) {
-    for (var ty = 0; ty < ROWS; ty++) if (solid(tx, ty) || semi(tx, ty)) return ty * T;
+    for (var ty = ROWS - 1; ty > 0; ty--) if ((solid(tx, ty) || semi(tx, ty)) && !solid(tx, ty - 1)) return ty * T;
     return 12 * T;
   }
 

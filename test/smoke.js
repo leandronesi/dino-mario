@@ -17,7 +17,7 @@ for(const file of fs.readdirSync(dir).filter(f=>f.endsWith('.js')).sort()){
 }
 const G=sandbox.G,M=G.mario,T=48;
 const kid=G.accounts.create({name:'Prova',level:1});G.accounts.login(kid.id);
-const only=process.argv[2];
+const only=process.argv[2];let s0;
 
 // ---- rules are data, no dice
 const gameSrc=fs.readFileSync(path.join(dir,'20-game.js'),'utf8').replace(/\/\*[\s\S]*?\*\//g,'').replace(/\/\/.*$/gm,'');
@@ -69,6 +69,10 @@ for(const level of [1,2])G.LEVELS.forEach((lv,li)=>{
 });
 if(only&&only!=='quick')process.exit(0);
 delete G.save.mario;M.quiet(false);   // the bot really cleared the levels: start the rule checks from a fresh save
+
+// ---- nobody is ever born on the roof of the cave: start, checkpoint retry, respawn after a fall
+for(const level of [1,2]){G.level=level;M.build(1);assert.equal(M.state().p.y+M.state().p.h,13*T,'start on the cave floor');M.build(1,true);assert.equal(M.state().p.y+M.state().p.h,13*T,'checkpoint on the cave floor');}
+G.level=1;M.build(1);M.start();s0=M.state();s0.p.x=44*T;s0.safe=40*T;for(let i=0;i<200&&!M.state().falls;i++)M.step({r:1});play({},10);assert(M.state().p.y>10*T,'respawn on the cave floor');
 
 // ---- the passive player never finishes, and in Grande gets hurt by what walks at him
 for(const level of [1,2])G.LEVELS.forEach((lv,li)=>{
