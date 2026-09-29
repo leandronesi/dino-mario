@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="description" content="Dino Mario — salta, schiaccia e arriva alla bandiera, per tablet.">
+<meta name="description" content="Dino Salto — salta, schiaccia e arriva alla bandiera, per tablet.">
 <meta name="theme-color" content="#183f37">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Dino Mario">
-<title>Dino Mario</title>
+<meta name="apple-mobile-web-app-title" content="Dino Salto">
+<title>Dino Salto</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-180.png">
@@ -85,7 +85,7 @@ html, body {
 
 <script>
 /* ==================== 00-core.js ==================== */
-/* Dino Mario — core engine (copied from Dino Run).
+/* Dino Salto — core engine (copied from Dino Run).
    Fixed 1280x720 logical world, letterboxed. Canvas only, no assets, no deps.
    Everything a scene needs hangs off the global `G`. */
 (function () {
@@ -1689,7 +1689,7 @@ html, body {
 
 
 /* ==================== 10-levels.js ==================== */
-/* Dino Mario — the four levels, written with a tiny builder instead of ASCII
+/* Dino Salto — the four levels, written with a tiny builder instead of ASCII
    art: coordinates are tiles (48px), row 0 is the top, the ground's top row is
    13, so a dino standing on the ground has its feet at y = 13 * 48.
 
@@ -1970,7 +1970,7 @@ html, body {
 
 
 /* ==================== 20-game.js ==================== */
-/* Dino Mario — the platformer.
+/* Dino Salto — the platformer.
 
    Everything the game remembers between frames lives in S, and S is plain
    data: the level grid itself is immutable (G.LEVELS) and S only keeps the
@@ -2838,7 +2838,7 @@ html, body {
       if (page < 0) page = Math.min(worlds.length - 1, all[Math.min(s.open, all.length - 1)].world - 1);
       var levels = worlds[page].levels, base = all.indexOf(levels[0]);
       G.mario.background(c, G.mario.THEME.prato, 'prato', G.t * 30);
-      G.text('DINO MARIO', 640, 104, { size: 84, color: C.cream, stroke: C.leafDeep, strokeWidth: 14 });
+      G.text('DINO SALTO', 640, 104, { size: 84, color: C.cream, stroke: C.leafDeep, strokeWidth: 14 });
       G.text('Mondo ' + (page + 1) + ' · ' + worlds[page].name, 640, 178, { size: 34, color: C.cream, stroke: C.leafDeep, strokeWidth: 8 });
       A.dino(c, 150, 170, 120, { t: G.t, pose: 'happy', color: G.account && G.account.color, hat: null });
       var x0 = (W - (levels.length * CARD.w + (levels.length - 1) * CARD.gap)) / 2;

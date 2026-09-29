@@ -1,4 +1,4 @@
-/* Dino Mario — the platformer.
+/* Dino Salto — the platformer.
 
    Everything the game remembers between frames lives in S, and S is plain
    data: the level grid itself is immutable (G.LEVELS) and S only keeps the

@@ -1,4 +1,4 @@
-# Dino Mario
+# Dino Salto
 
 Platform a scorrimento laterale per bambini, in canvas, senza librerie né
 risorse esterne. Il dino corre, salta, schiaccia gli scarabei, colpisce i
@@ -44,3 +44,11 @@ esiste per questo: se un livello modificato non si può più finire, `test/smoke
 lo dice. Circa 7 minuti per i venti livelli alle due età.
 
 Per rigenerare le icone PNG da `icon.svg`: `node tools/icons.js`.
+
+## Perché non si chiama più "Dino Mario"
+
+Il gioco è nato come "Dino Mario", ma su Android Chrome si rifiutava di
+installarlo come app ("app già installata / crea una scorciatoia") su tutti i
+dispositivi, mentre Dino Run, identico nella struttura, si installava. L'unica
+differenza era il nome: "Mario" è un marchio Nintendo. L'indirizzo resta
+`/dino-mario/` perché i salvataggi dei bambini non dipendono dal nome.

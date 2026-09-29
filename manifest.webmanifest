@@ -1,12 +1,12 @@
 {
-  "name": "Dino Mario",
-  "short_name": "Dino Mario",
+  "name": "Dino Salto",
+  "short_name": "Dino Salto",
   "description": "Salta sulle piattaforme, schiaccia gli scarabei e arriva alla bandiera.",
   "lang": "it",
   "dir": "ltr",
   "start_url": "./",
   "scope": "./",
-  "id": "/dino-mario/app",
+  "id": "/dino-mario/salto",
   "display": "fullscreen",
   "display_override": [
     "fullscreen",

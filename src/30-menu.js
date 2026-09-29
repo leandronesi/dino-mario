@@ -45,7 +45,7 @@
       if (page < 0) page = Math.min(worlds.length - 1, all[Math.min(s.open, all.length - 1)].world - 1);
       var levels = worlds[page].levels, base = all.indexOf(levels[0]);
       G.mario.background(c, G.mario.THEME.prato, 'prato', G.t * 30);
-      G.text('DINO MARIO', 640, 104, { size: 84, color: C.cream, stroke: C.leafDeep, strokeWidth: 14 });
+      G.text('DINO SALTO', 640, 104, { size: 84, color: C.cream, stroke: C.leafDeep, strokeWidth: 14 });
       G.text('Mondo ' + (page + 1) + ' · ' + worlds[page].name, 640, 178, { size: 34, color: C.cream, stroke: C.leafDeep, strokeWidth: 8 });
       A.dino(c, 150, 170, 120, { t: G.t, pose: 'happy', color: G.account && G.account.color, hat: null });
       var x0 = (W - (levels.length * CARD.w + (levels.length - 1) * CARD.gap)) / 2;
