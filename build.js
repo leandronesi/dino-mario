@@ -43,7 +43,8 @@ fs.writeFileSync(path.join(root, 'index.html'), html);
 // The template counts too — changing only the caching strategy still has to
 // invalidate what the old strategy put there.
 const swTpl = read('sw.template.js');
-const hash = crypto.createHash('sha1').update(html).update(swTpl).digest('hex').slice(0, 10);
+// the manifest counts too: it is served cache-first, so a manifest-only change must bump the version
+const hash = crypto.createHash('sha1').update(html).update(swTpl).update(read('manifest.webmanifest')).digest('hex').slice(0, 10);
 const sw = swTpl.replace('__VERSION__', () => hash);
 fs.writeFileSync(path.join(root, 'sw.js'), sw);
 
