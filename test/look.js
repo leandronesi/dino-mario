@@ -29,7 +29,7 @@ async function main(){
   await call('Page.navigate',{url:origin+'/'});
   for(let i=0;i<100;i++){await delay(50);if(await run("!!(window.G && G.current==='accesso')"))break;}
   await run("const a=G.accounts.create({name:'Leo',color:G.C.dino,level:2});G.accounts.login(a.id);G.go('menu')");await delay(600);await shot('menu');
-  await run("G.save.mario.open=3;G.go('gioco',{level:0})");await delay(600);await shot('1-ready');
+  await run("G.save.mario.open=19;G.save.mario.v=2;G.go('gioco',{level:0})");await delay(600);await shot('1-ready');
   await run("G.mario.start()");await delay(900);await shot('1-start');
 
   // real touch: hold the right pad, then add a second finger on the jump side
@@ -43,7 +43,7 @@ async function main(){
   const held=await run('JSON.stringify(G.mario.state().p.vx)');console.log('after release vx',held);
   console.log('touch: hold-to-walk and two-finger jump pass');
 
-  const spots=[[0,60,2,'1-pipes'],[0,108,0,'1-blocks'],[0,176,1,'1-stairs'],[1,28,1,'2-corridor'],[1,118,2,'2-platform'],[2,44,0,'3-trees'],[2,92,1,'3-platform'],[3,30,2,'4-lava'],[3,86,0,'4-hedgehog'],[3,163,1,'4-boss']];
+  const spots=[[0,60,2,'1-pipes'],[1,150,0,'1-2-spring'],[2,40,1,'1-3-trees'],[3,80,0,'1-4-castle'],[5,40,1,'2-2-cave'],[12,40,2,'4-1-beach'],[13,50,0,'4-2-fish'],[14,20,0,'4-3-palms'],[15,55,1,'4-4-lighthouse'],[16,30,0,'5-1-ash'],[19,163,1,'5-4-boss']];
   for(const [li,tx,power,name] of spots){
     await run(`G.go('gioco',{level:${li}})`);await delay(500);
     await run(`G.mario.start();(()=>{const s=G.mario.state(),T=48;s.p.x=${tx}*T;s.p.y=0;s.p.vy=0;s.cam=Math.max(0,s.p.x-480);if(${power})s.p.power=${power},s.p.w=40,s.p.h=86;s.ens.forEach(e=>{if(Math.abs(e.x-s.p.x)<1400)e.act=true;});})()`);

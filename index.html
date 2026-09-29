@@ -1857,11 +1857,114 @@ html, body {
     b.fill(159, 11, 16, 1, 'Z');
     b.e('boss', 169, 10);
     b.ground(175, 189, 11);
-    b.e('lever', 176, 10).e('chick', 184, 10);
+    b.e('lever', 176, 10).e('chick', 184, 10, { col: 4 });
+    b.lv.bridge = { x0: 159, x1: 174, row: 11 };
     L.push(b.lv);
   })();
 
-  G.LEVELS = L;
+  /* ------------------------------------------------------------ pieces
+     The other sixteen levels are composed from pieces, each one already
+     proven: every piece starts and ends on the ground at row 13 unless it is
+     a hole (gap, platGap, drops, trees), and two holes never touch. A piece
+     takes (builder, x, arg) and returns the x where the next one starts. */
+  var K = {
+    start: function (b, x) { b.ground(x, x + 13); return x + 14; },
+    plain: function (b, x, w) { w = w || 8; b.ground(x, x + w - 1); return x + w; },
+    blocks: function (b, x, power) {
+      b.ground(x, x + 15); b.put(x + 3, 9, power ? '?M?' : '?B?'); b.put(x + 9, 9, 'B?B?B'); b.put(x + 11, 5, '?'); b.e('beetle', x + 13);
+      return x + 16;
+    },
+    pipes: function (b, x) {
+      b.ground(x, x + 19); b.pipe(x + 2, 2); b.e('beetle', x + 6); b.pipe(x + 9, 3); b.e('beetle', x + 12, 12, { only: 2 }); b.pipe(x + 15, 4);
+      return x + 20;
+    },
+    gap: function (b, x, w) { w = w || 3; b.fruits(x, 9, w, true); return x + w; },
+    // eight tiles of nothing, and a platform that touches both edges: just step on it
+    platGap: function (b, x) { b.plat(x, 11, 3, 'x', 5, 1.1); b.fruits(x + 2, 8, 4); return x + 8; },
+    stairs: function (b, x) { b.ground(x, x + 13); b.stairs(x + 1, 4, 1); b.stairs(x + 8, 4, -1); return x + 14; },
+    stairsGap: function (b, x) { b.ground(x, x + 5); b.stairs(x + 1, 4, 1); b.fill(x + 5, 9, 1, 4, 'S'); b.ground(x + 8, x + 13); b.stairs(x + 8, 4, -1); return x + 14; },
+    enemies: function (b, x, n) {
+      var w = 6 + 3 * n; b.ground(x, x + w - 1);
+      for (var i = 0; i < n; i++) b.e('beetle', x + 5 + 3 * i, 12, i % 2 ? { only: 2 } : undefined);
+      return x + w;
+    },
+    snails: function (b, x) { b.ground(x, x + 17); b.e('snail', x + 5).e('beetle', x + 10).e('beetle', x + 13).e('beetle', x + 16, 12, { only: 2 }); return x + 18; },
+    bricks: function (b, x) { b.ground(x, x + 15); b.put(x + 3, 9, 'BBB?BBB'); b.fruits(x + 3, 8, 7); b.put(x + 5, 5, 'B?B'); b.e('beetle', x + 12); return x + 16; },
+    birds: function (b, x) { b.ground(x, x + 17); b.e('bird', x + 8, 8).e('bird', x + 15, 7, { only: 2 }); b.fruits(x + 3, 9, 4, true); return x + 18; },
+    hedge: function (b, x) { b.ground(x, x + 13); b.e('hedgehog', x + 6, 12, { alt: 'beetle' }); b.put(x + 9, 9, '?'); return x + 14; },
+    pillars: function (b, x) {
+      b.ground(x, x + 15); b.fill(x + 3, 11, 1, 2, 'S'); b.fill(x + 7, 10, 1, 3, 'S'); b.fill(x + 11, 9, 1, 4, 'S');
+      b.e('beetle', x + 5).e('beetle', x + 9, 12, { only: 2 }); b.fruits(x + 12, 7, 3);
+      return x + 16;
+    },
+    drops: function (b, x) { b.e('drop', x + 1, 14, { only: 2 }); b.fruits(x, 9, 3, true); return x + 3; },
+    // tree tops over the void: gaps of three, never more than two rows up
+    trees: function (b, x, n) {
+      var tops = [11, 10, 9, 10, 11, 10, 9, 10], widths = [5, 4, 5, 4, 5, 4, 5, 4];
+      for (var i = 0; i < n; i++) {
+        x += 3; b.tree(x, widths[i], tops[i]);
+        if (widths[i] === 5 && i % 2 === 0) b.e('beetle', x + 3, tops[i] - 1);
+        else b.fruits(x + 1, tops[i] - 2, 2);
+        x += widths[i];
+      }
+      return x + 3;
+    },
+    spring: function (b, x) {
+      b.ground(x, x + 15); b.set(x + 4, 12, 'J'); b.fill(x + 6, 5, 7, 1, '='); b.fruits(x + 7, 4, 5);
+      return x + 16;
+    },
+    check: function (b, x) { b.ground(x, x + 7); b.checkpoint(x + 3); return x + 8; },
+    end: function (b, x) { b.ground(x, x + 27); b.stairs(x + 2, 6, 1); b.fill(x + 8, 7, 1, 6, 'S'); b.flag(x + 16); return x + 28; },
+    // the castle: the Big Beetle on a bridge, the lever, and a little dino in a cage
+    boss: function (b, x, col) {
+      b.ground(x, x + 2); b.stairs(x + 1, 2, 1); b.ground(x + 3, x + 17, 11);
+      b.fill(x + 18, 11, 16, 1, 'Z'); b.e('boss', x + 28, 10);
+      b.ground(x + 34, x + 48, 11); b.e('lever', x + 35, 10).e('chick', x + 43, 10, { col: col });
+      b.lv.bridge = { x0: x + 18, x1: x + 33, row: 11 };
+      return x + 49;
+    }
+  };
+  function compose(name, theme, list, o) {
+    var b = new Builder(0, name, theme, 460), x = 0;
+    list.forEach(function (it) { var k = typeof it === 'string' ? it : it[0], arg = typeof it === 'string' ? undefined : it[1]; x = K[k](b, x, arg); });
+    b.lv.w = x; b.lv.grid = b.lv.grid.map(function (row) { return row.slice(0, x); });
+    if (o && o.ceiling) b.fill(8, 2, x - 38, 1, 'S');
+    return b.lv;
+  }
+
+  var WORLDS = [
+    { name: 'Il Prato', levels: [L[0],
+      compose('Collina fiorita', 'prato', ['start', ['blocks', 1], ['enemies', 3], ['gap', 2], 'pipes', 'check', 'snails', ['gap', 3], 'stairs', 'bricks', 'spring', 'end']),
+      compose('Ponti sul fiume', 'prato', ['start', 'platGap', 'blocks', ['trees', 3], 'check', 'platGap', ['enemies', 4], ['gap', 3], 'stairsGap', 'end']),
+      compose('Il castello del prato', 'prato', ['start', ['blocks', 1], 'pillars', ['enemies', 3], 'check', 'bricks', ['gap', 3], ['boss', 0]])] },
+    { name: 'La Grotta', levels: [L[1],
+      compose('Cunicoli', 'grotta', ['start', 'bricks', 'pillars', ['enemies', 4], 'check', 'platGap', 'snails', ['blocks', 1], ['gap', 2], 'end'], { ceiling: 1 }),
+      compose('Pozzi profondi', 'grotta', ['start', ['gap', 3], 'pillars', 'platGap', 'check', ['gap', 4], ['enemies', 3], 'platGap', 'stairs', 'end'], { ceiling: 1 }),
+      compose('Il castello di pietra', 'grotta', ['start', ['blocks', 1], 'pillars', 'snails', 'check', 'platGap', ['enemies', 4], ['boss', 1]], { ceiling: 1 })] },
+    { name: 'Gli Alberi', levels: [L[2],
+      compose('Rami alti', 'alberi', ['start', ['trees', 4], 'check', ['trees', 5], 'birds', 'end']),
+      compose('Liane e uccelli', 'alberi', ['start', ['trees', 3], 'platGap', 'birds', 'check', ['trees', 4], 'platGap', 'end']),
+      compose('Il castello sugli alberi', 'alberi', ['start', ['trees', 3], ['blocks', 1], 'check', ['trees', 3], ['boss', 2]])] },
+    { name: 'La Spiaggia', levels: [
+      compose('La spiaggia', 'spiaggia', ['start', ['blocks', 1], ['enemies', 3], ['gap', 2], 'snails', 'check', 'pipes', 'spring', ['gap', 3], 'end']),
+      compose('Scogli', 'spiaggia', ['start', 'pillars', ['gap', 3], 'platGap', 'check', 'drops', ['enemies', 4], 'stairsGap', 'end']),
+      compose('Palme sul mare', 'spiaggia', ['start', ['trees', 4], 'platGap', 'check', ['trees', 4], 'birds', 'end']),
+      compose('Il faro', 'spiaggia', ['start', ['blocks', 1], 'snails', 'check', ['gap', 3], ['enemies', 3], ['boss', 3]])] },
+    { name: 'Il Vulcano', levels: [
+      compose('Cenere', 'vulcano', ['start', ['blocks', 1], 'hedge', 'drops', 'check', 'pillars', ['enemies', 3], 'end']),
+      compose('Fiumi di lava', 'vulcano', ['start', 'drops', 'platGap', 'check', 'drops', 'pillars', 'platGap', 'end']),
+      compose('La montagna di fuoco', 'vulcano', ['start', ['blocks', 1], 'stairsGap', 'hedge', 'check', 'drops', 'snails', 'birds', 'end']),
+      L[3]] }
+  ];
+  var ALL = [];
+  WORLDS.forEach(function (w, wi) {
+    w.levels.forEach(function (lv, ni) { lv.world = wi + 1; lv.num = ni + 1; lv.id = (wi + 1) + '-' + (ni + 1); ALL.push(lv); });
+  });
+  L[3].name = 'Il castello di fuoco';
+
+  G.LEVELS = ALL;
+  G.WORLDS = WORLDS;
+
   G.ROWS = ROWS;
 })();
 
@@ -1888,7 +1991,7 @@ html, body {
   var S = null, LV = null, quiet = false, acc = 0;
   var touches = {}, keys = {};
 
-  var SOLID = { '#': 1, S: 1, B: 1, '?': 1, M: 1, H: 1, T: 1, U: 1, P: 1, p: 1, L: 1, Z: 1 };
+  var SOLID = { '#': 1, S: 1, B: 1, '?': 1, M: 1, H: 1, T: 1, U: 1, P: 1, p: 1, L: 1, Z: 1, J: 1 };
   var BLOCKS = { '?': 1, M: 1, H: 1, T: 1 };
   var SIZE = [{ w: 30, h: 44, s: 52 }, { w: 40, h: 86, s: 96 }, { w: 40, h: 86, s: 96 }];
 
@@ -1901,7 +2004,16 @@ html, body {
     };
   }
 
-  function saved() { return G.save.mario || (G.save.mario = { open: 0, best: {}, done: {} }); }
+  /* v2: twenty levels. The four old ones moved (Grotta 1 -> 4, Alberi 2 -> 8, Vulcano 3 -> 19). */
+  function saved() {
+    var s = G.save.mario || (G.save.mario = { open: 0, best: {}, done: {}, v: 2 });
+    if (s.v !== 2) {
+      var map = [0, 4, 8, 19], done = {}, best = {}, open = 0;
+      Object.keys(s.done || {}).forEach(function (k) { done[map[k]] = true; best[map[k]] = (s.best || {})[k] || 0; open = Math.max(open, map[k] + 1); });
+      s.done = done; s.best = best; s.open = Math.max(Math.min(open, 19), map[s.open] === undefined ? 0 : Math.min(map[s.open], open)); s.v = 2;
+    }
+    return s;
+  }
 
   /* ------------------------------------------------------------ tiles */
   function key(tx, ty) { return tx + ty * 1000; }
@@ -1982,7 +2094,7 @@ html, body {
         S.plats.push({ x: e.x * T, y: e.y * T, w: e.w * T, h: 22, bx: e.x * T, by: e.y * T, axis: e.axis, range: e.range * T, speed: e.speed, ph: 0, dx: 0, dy: 0 });
         return;
       }
-      if (!d) { S.marks.push({ type: type, x: e.x * T, y: e.y * T, on: false, t: 0 }); return; }
+      if (!d) { S.marks.push({ type: type, x: e.x * T, y: e.y * T, on: false, t: 0, col: e.col || 0 }); return; }
       var w = d.w, h = d.h;
       if (type === 'boss' && G.level === 1) { w = 80; h = 80; }
       var en = { id: i, type: type, x: e.x * T + (T - w) / 2, y: (e.y + 1) * T - h, w: w, h: h, vx: -d.v * tn.foe, vy: 0, bx: e.x * T, by: e.y * T, act: false, dead: 0, squash: 0, st: 'walk', kick: 0, hp: G.level === 1 ? 3 : 5, jt: 1.6, hurt: 0 };
@@ -2000,7 +2112,7 @@ html, body {
     return 12 * T;
   }
 
-  function start() { if (S.phase !== 'ready') return; S.phase = 'play'; sfx('win'); say(S.li === 3 ? 'Il Vulcano! Salva il piccolo dino.' : LV.name + '! Corri fino alla bandiera.'); }
+  function start() { if (S.phase !== 'ready') return; S.phase = 'play'; sfx('win'); say(LV.bridge ? LV.name + '! Salva il piccolo dino.' : LV.name + '! Corri fino alla bandiera.'); }
 
   /* ------------------------------------------------------------ player */
   function setPower(n) {
@@ -2113,11 +2225,15 @@ html, body {
     if (inp.j && !P.prevJ) P.buf = tn.buffer;
     if (P.on) P.coy = tn.coyote;
     if (P.buf > 0 && P.coy > 0) { P.vy = -tn.jump; P.buf = 0; P.coy = 0; P.on = false; P.plat = -1; sfx('tap'); }
-    var g = P.vy < 0 ? (inp.j ? tn.gHold : tn.gRel) : tn.gFall;
+    if (P.vy >= 0) P.boost = false;
+    var g = P.vy < 0 ? (inp.j || P.boost ? tn.gHold : tn.gRel) : tn.gFall;
     P.vy = Math.min(P.vy + g * DT, tn.maxFall);
     P.prevBottom = P.y + P.h;
     move(P, DT);
     if (P.head) hitBlock(P.head.tx, P.head.ty);
+    // the spring: land on it and fly, whether or not the jump is held
+    if (P.on) { var sty = Math.floor((P.y + P.h + 1) / T); for (var sx = Math.floor(P.x / T); sx <= Math.floor((P.x + P.w - 1) / T); sx++) if (tile(sx, sty) === 'J') { P.vy = -1180; P.boost = true; P.on = false; S.springT = .3; sfx('pop'); break; } }
+    S.springT = Math.max(0, (S.springT || 0) - DT);
     // land on a moving platform (from above only)
     P.plat = -1;
     if (P.vy >= 0 && !P.on) for (i = 0; i < S.plats.length; i++) {
@@ -2204,7 +2320,7 @@ html, body {
         addFruit(bonus, P.x, P.y); float(P.x, P.y - 20, '+' + bonus, C.sun); sfx('win');
       }
       if (m.type === 'lever' && P.x + P.w > m.x + 6 && !m.on) {
-        m.on = true; S.phase = 'bridge'; S.bridge = 174; S.timer = .1; P.vx = 0; sfx('chime'); say('Giù il ponte!');
+        m.on = true; S.phase = 'bridge'; S.bridge = LV.bridge.x1; S.timer = .1; P.vx = 0; sfx('chime'); say('Giù il ponte!');
       }
     });
 
@@ -2271,8 +2387,8 @@ html, body {
   function bridgeStep(tn) {
     var P = S.p;
     P.vy = Math.min(P.vy + tn.gFall * DT, tn.maxFall); P.vx = 0; move(P, DT);
-    if (S.bridge >= 159) {
-      if ((S.timer -= DT) <= 0) { S.mod[key(S.bridge, 11)] = ' '; S.bridge--; S.timer = .06; sfx('tap'); }
+    if (S.bridge >= LV.bridge.x0) {
+      if ((S.timer -= DT) <= 0) { S.mod[key(S.bridge, LV.bridge.row)] = ' '; S.bridge--; S.timer = .06; sfx('tap'); }
     } else if (S.bridge > -5) {
       P.vx = 140; P.face = 1; move(P, DT);
       var chick = S.marks.filter(function (m) { return m.type === 'chick'; })[0];
@@ -2291,10 +2407,12 @@ html, body {
   }
 
   /* ================================================================ drawing */
+  var CHICK = [C.pinkPop, C.blueberry, C.mint, C.tangerine, C.pinkPop];
   var THEME = {
     prato: { sky: ['#7fd0f0', '#cdf0f7'], hill: '#8fcf7a', hill2: '#6bb862', grass: '#5cbf4f', dirt: '#b9773f', dirt2: '#9a5f30', liquid: '#3fb6c9' },
     grotta: { sky: ['#1e1b33', '#3b3150'], hill: '#2c2744', hill2: '#3a3358', grass: '#7f8fb8', dirt: '#56607f', dirt2: '#454e6b', liquid: '#2a5c7a' },
     alberi: { sky: ['#ffc98a', '#ffeccb'], hill: '#9bcf8a', hill2: '#78b76c', grass: '#5cbf4f', dirt: '#b9773f', dirt2: '#9a5f30', liquid: '#3fb6c9' },
+    spiaggia: { sky: ['#5ccdf2', '#e6f8f4'], hill: '#9fdcef', hill2: '#f0d9a0', grass: '#f7e2a8', dirt: '#e8c27a', dirt2: '#d6a95c', liquid: '#2fb5d9' },
     vulcano: { sky: ['#3a1622', '#8a3a2a'], hill: '#4a2330', hill2: '#5c2a33', grass: '#e0623a', dirt: '#4a3a3f', dirt2: '#3a2c30', liquid: '#ff7a1a' }
   };
   function poly(c, pts, col) { c.fillStyle = col; c.beginPath(); pts.forEach(function (p, i) { if (i) c.lineTo(p[0], p[1]); else c.moveTo(p[0], p[1]); }); c.closePath(); c.fill(); }
@@ -2311,8 +2429,17 @@ html, body {
       for (i = 0; i < 14; i++) { x = ((i * 157 - cam * .3) % 2200 + 2200) % 2200 - 200; poly(c, [[x, 140], [x + 30, 140], [x + 15, 200 + (i % 3) * 30]], '#2c2744'); }
       for (i = 0; i < 10; i++) { x = ((i * 263 - cam * .45) % 2400 + 2400) % 2400 - 200; c.fillStyle = i % 2 ? '#8f5bd666' : '#38d9a966'; poly(c, [[x, 600], [x + 14, 560], [x + 28, 600]], c.fillStyle); }
     } else {
+      if (theme === 'spiaggia') { c.fillStyle = '#3fa9d6'; c.fillRect(0, 470, W, 60); c.fillStyle = 'rgba(255,255,255,.5)'; for (i = 0; i < 12; i++) { x = ((i * 137 - cam * .2) % 1400 + 1400) % 1400 - 60; c.fillRect(x, 488 + (i % 3) * 12, 40, 3); } }
       c.fillStyle = theme === 'alberi' ? '#fff3c4' : '#fff7d0'; c.beginPath(); c.arc(1060, 150, 56, 0, 7); c.fill();
       for (i = 0; i < 6; i++) { x = ((i * 390 - cam * .15) % 2400 + 2400) % 2400 - 250; cloud(c, x, 150 + (i % 3) * 50, 1 + (i % 2) * .3); }
+    }
+    // castle levels: the castle waits on the horizon, a little closer at every step
+    if (LV && LV.bridge && theme !== 'grotta') {
+      var cx0 = 1500 - cam * .18, cy0 = 470, stone = theme === 'vulcano' ? '#3a2430' : '#9aa0a6', dark = theme === 'vulcano' ? '#2a1420' : '#7b8188';
+      c.fillStyle = stone; c.fillRect(cx0, cy0 - 150, 260, 150);
+      [[-30, 230], [100, 280], [230, 230]].forEach(function (tw) { c.fillStyle = stone; c.fillRect(cx0 + tw[0], cy0 - tw[1], 60, tw[1]); poly(c, [[cx0 + tw[0] - 8, cy0 - tw[1]], [cx0 + tw[0] + 30, cy0 - tw[1] - 50], [cx0 + tw[0] + 68, cy0 - tw[1]]], dark); });
+      c.fillStyle = dark; G.roundRect(c, cx0 + 105, cy0 - 70, 50, 70, 25); c.fill();
+      c.fillStyle = C.berry; poly(c, [[cx0 + 130, cy0 - 330], [cx0 + 170, cy0 - 318], [cx0 + 130, cy0 - 306]], C.berry);
     }
     for (i = -1; i < 5; i++) { x = i * 420 - (cam * .3) % 420; hill(c, x, 560, 260, 170, th.hill); }
     for (i = -1; i < 6; i++) { x = i * 300 - (cam * .5) % 300 + 120; hill(c, x, 600, 190, 110, th.hill2); }
@@ -2373,6 +2500,12 @@ html, body {
         c.fillStyle = '#8a5a32'; c.fillRect(x, y, T, 18); c.fillStyle = '#6a4222'; c.fillRect(x + T - 4, y, 4, 18);
         c.strokeStyle = '#b5b0a8'; c.lineWidth = 3; c.beginPath(); c.moveTo(x, y + 3); c.quadraticCurveTo(x + T / 2, y + 12, x + T, y + 3); c.stroke();
         break;
+      case 'J':
+        var sq = S.springT > 0 ? 10 : 0;
+        c.fillStyle = '#6a4222'; c.fillRect(x + 4, y + T - 10, T - 8, 10);
+        c.strokeStyle = '#8e969c'; c.lineWidth = 5; c.beginPath(); for (var z = 0; z <= 4; z++) c.lineTo(x + (z % 2 ? T - 12 : 12), y + T - 10 - z * (T - 22 - sq) / 4); c.stroke();
+        c.fillStyle = C.berry; G.roundRect(c, x + 2, y + 6 + sq, T - 4, 12, 6); c.fill();
+        break;
       case '=':
         c.fillStyle = '#b07a44'; c.fillRect(x, y, T, 14); c.fillStyle = '#7a4a26'; c.fillRect(x, y + 10, T, 4);
         break;
@@ -2424,8 +2557,8 @@ html, body {
         c.save(); c.translate(x + 24, ly - 16); c.rotate(m.on ? .7 : -.7);
         c.fillStyle = '#6a4222'; c.fillRect(-4, -56, 8, 56); c.fillStyle = C.berry; c.beginPath(); c.arc(0, -58, 12, 0, 7); c.fill(); c.restore();
       } else if (m.type === 'chick') {
-        var cy = m.y + T, free = S.bridge === -10 || S.phase === 'clear' || (S.bridge < 159 && S.bridge > -5 && S.phase === 'bridge');
-        if (A.chick) A.chick(c, x + 24, cy - 30, 60, { t: S.t, color: C.pinkPop });
+        var cy = m.y + T, free = S.bridge === -10 || S.phase === 'clear' || (S.bridge < LV.bridge.x0 && S.bridge > -5 && S.phase === 'bridge');
+        if (A.chick) A.chick(c, x + 24, cy - 30, 60, { t: S.t, color: CHICK[m.col] });
         if (!free) { c.strokeStyle = '#3a2c30'; c.lineWidth = 5; for (var i = 0; i < 6; i++) { c.beginPath(); c.moveTo(x - 16 + i * 16, cy - 84); c.lineTo(x - 16 + i * 16, cy); c.stroke(); } c.fillStyle = '#3a2c30'; c.fillRect(x - 22, cy - 90, 92, 10); }
       }
     });
@@ -2473,6 +2606,13 @@ html, body {
         break;
       case 'drop':
         if (y > ROWS * T) break;
+        if (LV.theme !== 'vulcano') {
+          // out of the water it is a fish, not a lava drop
+          c.fillStyle = C.tangerine; c.beginPath(); c.ellipse(cx, y + 17, 12, 18, 0, 0, 7); c.fill();
+          poly(c, [[cx, y + 30], [cx - 12, y + 42], [cx + 12, y + 42]], C.tangerine);
+          c.fillStyle = '#fff'; c.beginPath(); c.arc(cx - 5, y + 10, 4, 0, 7); c.arc(cx + 5, y + 10, 4, 0, 7); c.fill(); c.fillStyle = C.ink; c.beginPath(); c.arc(cx - 5, y + 10, 2, 0, 7); c.arc(cx + 5, y + 10, 2, 0, 7); c.fill();
+          break;
+        }
         c.fillStyle = '#ffb04a'; c.beginPath(); c.arc(cx, y + 17, 17, 0, 7); c.fill();
         c.fillStyle = '#ff7a1a'; poly(c, [[cx - 14, y + 12], [cx, y - 12], [cx + 14, y + 12]], '#ff7a1a');
         eyes(cx, y + 17, 4);
@@ -2603,10 +2743,10 @@ html, body {
       G.ui.button({ id: 'retry', x: 330, y: 420, w: 300, h: 112, color: C.leaf, label: 'Riprova', onTap: function () { build(S.li, S.checked); start(); } });
       G.ui.button({ id: 'menu2', x: 650, y: 420, w: 300, h: 112, color: C.tangerine, label: 'Mappa', onTap: function () { G.go('menu'); } });
     } else if (S.phase === 'clear') {
-      var last = S.li === G.LEVELS.length - 1;
-      panel(c, last ? 'Hai salvato il piccolo!' : 'Livello finito!', 'Frutti raccolti: ' + S.got);
+      var last = S.li === G.LEVELS.length - 1, saved_ = !!LV.bridge, cm = S.marks.filter(function (m) { return m.type === 'chick'; })[0];
+      panel(c, last ? 'Hai finito tutti i mondi!' : saved_ ? 'Hai salvato il piccolo!' : 'Livello finito!', 'Frutti raccolti: ' + S.got);
       A.dino(c, 520, 400, 110, { t: G.t, pose: 'happy', color: G.account && G.account.color, hat: null });
-      if (last && A.chick) A.chick(c, 640, 370, 70, { t: G.t, color: C.pinkPop });
+      if (saved_ && cm && A.chick) A.chick(c, 640, 370, 70, { t: G.t, color: CHICK[cm.col] });
       if (!last) G.ui.button({ id: 'next', x: 660, y: 300, w: 300, h: 112, color: C.leaf, label: 'Avanti', onTap: function () { build(S.li + 1); } });
       G.ui.button({ id: 'menu3', x: 660, y: last ? 330 : 430, w: 300, h: 112, color: C.tangerine, label: 'Mappa', onTap: function () { G.go('menu'); } });
     }
@@ -2658,7 +2798,7 @@ html, body {
 (function () {
   'use strict';
   var C = G.C, W = G.W;
-  var CARD = { w: 272, h: 262, y: 206, gap: 22 };
+  var CARD = { w: 250, h: 262, y: 206, gap: 20 }, page = -1;
 
   function saved() { return G.save.mario || (G.save.mario = { open: 0, best: {}, done: {} }); }
 
@@ -2676,6 +2816,7 @@ html, body {
       c.fillStyle = th.grass; c.fillRect(x, y + h - 34, w * .55, 9); c.fillRect(x + w * .72, y + h - 34, w * .28, 9);
     }
     if (lv.theme === 'grotta') { c.fillStyle = '#56607f'; c.fillRect(x, y, w, 16); }
+    if (lv.theme === 'spiaggia') { c.fillStyle = th.liquid; c.fillRect(x, y + h - 22, w, 22); c.fillStyle = '#8a5a32'; c.fillRect(x + w * .8, y + h * .35, 8, h * .45); c.fillStyle = C.leaf; c.beginPath(); c.ellipse(x + w * .8 + 4, y + h * .35, 26, 9, 0, 0, 7); c.fill(); }
     if (lv.theme === 'vulcano') { c.fillStyle = '#2a1018'; c.beginPath(); c.moveTo(x + w * .45, y + h - 30); c.lineTo(x + w * .62, y + h * .25); c.lineTo(x + w * .74, y + h * .25); c.lineTo(x + w * .95, y + h - 30); c.fill(); }
     c.fillStyle = '#f7c23c'; G.roundRect(c, x + w * .3, y + h * .3, 30, 30, 6); c.fill();
     G.text('?', x + w * .3 + 15, y + h * .3 + 15, { size: 22, color: '#fff6e0', stroke: '#8a4d10', strokeWidth: 4 });
@@ -2693,17 +2834,20 @@ html, body {
     hud: false, back: false,
     enter: function () { saved(); },
     draw: function (c) {
-      var s = saved(), levels = G.LEVELS;
+      var s = saved(), all = G.LEVELS, worlds = G.WORLDS;
+      if (page < 0) page = Math.min(worlds.length - 1, all[Math.min(s.open, all.length - 1)].world - 1);
+      var levels = worlds[page].levels, base = all.indexOf(levels[0]);
       G.mario.background(c, G.mario.THEME.prato, 'prato', G.t * 30);
       G.text('DINO MARIO', 640, 104, { size: 84, color: C.cream, stroke: C.leafDeep, strokeWidth: 14 });
+      G.text('Mondo ' + (page + 1) + ' · ' + worlds[page].name, 640, 178, { size: 34, color: C.cream, stroke: C.leafDeep, strokeWidth: 8 });
       A.dino(c, 150, 170, 120, { t: G.t, pose: 'happy', color: G.account && G.account.color, hat: null });
       var x0 = (W - (levels.length * CARD.w + (levels.length - 1) * CARD.gap)) / 2;
-      levels.forEach(function (lv, i) {
-        var x = x0 + i * (CARD.w + CARD.gap), y = CARD.y, open = i <= s.open;
+      levels.forEach(function (lv, j) {
+        var i = base + j, x = x0 + j * (CARD.w + CARD.gap), y = CARD.y, open = i <= s.open;
         c.fillStyle = '#123d29'; G.roundRect(c, x, y + 8, CARD.w, CARD.h, 26); c.fill();
         c.fillStyle = C.cream; G.roundRect(c, x, y, CARD.w, CARD.h, 26); c.fill();
         mini(c, lv, x + 12, y + 12, CARD.w - 24, 150);
-        G.text(lv.id + ' · ' + lv.name, x + CARD.w / 2, y + 194, { size: 28, color: C.leafDeep, maxWidth: CARD.w - 24 });
+        G.text(lv.id + ' · ' + lv.name, x + CARD.w / 2, y + 194, { size: 23, color: C.leafDeep, maxWidth: CARD.w - 24 });
         if (s.done[i]) {
           A.star(c, x + 44, y + 234, 18, C.sun);
           A.fruit(c, x + CARD.w - 92, y + 234, 15, 'fragola');
@@ -2714,12 +2858,16 @@ html, body {
           id: 'lv' + i, ghost: true, x: x, y: y, w: CARD.w, h: CARD.h, r: 26,
           onTap: function () {
             if (open) G.go('gioco', { level: i });
-            else { G.sfx('bad'); G.say('Prima finisci ' + levels[i - 1].name); }
+            else { G.sfx('bad'); G.say('Prima finisci ' + all[i - 1].name); }
           }
         });
       });
       G.ui.button({ id: 'profiles', x: 24, y: 590, w: 300, h: 100, color: C.water, label: 'Cambia dino', onTap: function () { G.accounts.logout(); G.go('accesso'); } });
-      var next = Math.min(s.open, levels.length - 1);
+      [[-1, 50], [1, 1230]].forEach(function (d) {
+        var to = page + d[0]; if (to < 0 || to >= worlds.length) return;
+        G.ui.round({ id: 'page' + d[0], x: d[1], y: 337, r: 50, color: C.sun, icon: function (cc, x, y) { cc.fillStyle = C.leafDeep; cc.beginPath(); cc.moveTo(x + d[0] * 22, y); cc.lineTo(x - d[0] * 14, y - 22); cc.lineTo(x - d[0] * 14, y + 22); cc.fill(); }, onTap: function () { page = to; G.sfx('whoosh'); } });
+      });
+      var next = Math.min(s.open, all.length - 1);
       G.ui.button({ id: 'play', x: 440, y: 584, w: 400, h: 110, r: 30, color: C.leaf, label: 'GIOCA!', onTap: function () { G.go('gioco', { level: next }); } });
       G.ui.button({ id: 'parents', x: 976, y: 590, w: 280, h: 100, color: C.bark, label: 'Genitori', onTap: function () { G.go('gate'); } });
     }

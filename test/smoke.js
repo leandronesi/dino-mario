@@ -17,7 +17,7 @@ for(const file of fs.readdirSync(dir).filter(f=>f.endsWith('.js')).sort()){
 }
 const G=sandbox.G,M=G.mario,T=48;
 const kid=G.accounts.create({name:'Prova',level:1});G.accounts.login(kid.id);
-const only=process.argv[2];let s0;
+const only=process.argv[2];let s0;const CAVE=G.LEVELS.findIndex(l=>l.name==='La Grotta');
 
 // ---- rules are data, no dice
 const gameSrc=fs.readFileSync(path.join(dir,'20-game.js'),'utf8').replace(/\/\*[\s\S]*?\*\//g,'').replace(/\/\/.*$/gm,'');
@@ -71,8 +71,8 @@ if(only&&only!=='quick')process.exit(0);
 delete G.save.mario;M.quiet(false);   // the bot really cleared the levels: start the rule checks from a fresh save
 
 // ---- nobody is ever born on the roof of the cave: start, checkpoint retry, respawn after a fall
-for(const level of [1,2]){G.level=level;M.build(1);assert.equal(M.state().p.y+M.state().p.h,13*T,'start on the cave floor');M.build(1,true);assert.equal(M.state().p.y+M.state().p.h,13*T,'checkpoint on the cave floor');}
-G.level=1;M.build(1);M.start();s0=M.state();s0.p.x=44*T;s0.safe=40*T;for(let i=0;i<200&&!M.state().falls;i++)M.step({r:1});play({},10);assert(M.state().p.y>10*T,'respawn on the cave floor');
+for(const level of [1,2]){G.level=level;M.build(CAVE);assert.equal(M.state().p.y+M.state().p.h,13*T,'start on the cave floor');M.build(CAVE,true);assert.equal(M.state().p.y+M.state().p.h,13*T,'checkpoint on the cave floor');}
+G.level=1;M.build(CAVE);M.start();s0=M.state();s0.p.x=44*T;s0.safe=40*T;for(let i=0;i<200&&!M.state().falls;i++)M.step({r:1});play({},10);assert(M.state().p.y>10*T,'respawn on the cave floor');
 
 // ---- the passive player never finishes, and in Grande gets hurt by what walks at him
 for(const level of [1,2])G.LEVELS.forEach((lv,li)=>{
@@ -115,12 +115,21 @@ assert.equal(M.state().phase,'clear');assert.equal(G.save.mario.open,1);assert.e
 const sib=G.accounts.create({name:'Fratello',level:2});G.accounts.login(sib.id);assert.equal(G.save.mario,undefined,'sibling save leaked');G.accounts.login(kid.id);assert.equal(G.save.mario.open,1);
 
 // ---- boss: the lever drops the bridge and the Big Beetle with it
-G.level=2;M.build(3);M.start();s=M.state();s.p.x=175*T;s.p.y=11*T-s.p.h;play({r:1},20);
-assert.equal(M.state().phase,'bridge');play({},60*8);assert.equal(M.state().phase,'clear');
-assert(!M.state().ens.some(e=>e.type==='boss'&&!e.dead),'the boss falls with the bridge');
+// every castle: the lever drops the bridge and the Big Beetle with it, and frees the little dino
+G.LEVELS.forEach((lv,li)=>{if(!lv.bridge)return;G.level=2;M.build(li);M.start();s=M.state();s.p.x=(lv.bridge.x1+1)*T;s.p.y=lv.bridge.row*T-s.p.h;play({r:1},20);
+  assert.equal(M.state().phase,'bridge',lv.name);play({},60*8);assert.equal(M.state().phase,'clear',lv.name);
+  assert(!M.state().ens.some(e=>e.type==='boss'&&!e.dead),'the boss falls with the bridge in '+lv.name);});
+assert.equal(G.LEVELS.length,20);assert.equal(G.LEVELS.filter(l=>l.bridge).length,5,'one castle per world');
+
+// ---- the spring throws the dino up to the planks
+{const li=G.LEVELS.findIndex(l=>l.grid[12].includes('J'));G.level=1;M.build(li);M.start();const jx=G.LEVELS[li].grid[12].indexOf('J');s=M.state();s.ens=[];s.p.x=jx*T+9;s.p.y=10*T;let top=1e9;for(let i=0;i<90;i++){M.step({});top=Math.min(top,M.state().p.y);}assert(top<5*T,'the spring must reach the planks: '+top);}
+
+// ---- an old save keeps its progress on the new map
+{const kid2=G.accounts.create({name:'Vecchio',level:1});G.accounts.login(kid2.id);G.save.mario={open:2,best:{0:5,1:3},done:{0:true,1:true}};M.build(0);M.start();M.state().p.x=194*T;play({r:1},600);
+ const sv=G.save.mario;assert.equal(sv.v,2);assert(sv.done[0]&&sv.done[4],'Prato and Grotta stay done');assert(sv.open>=5,'and what came after them is open: '+sv.open);G.accounts.login(kid.id);}
 
 // ---- scenes draw without throwing
 for(const name of ['accesso','menu','gioco']){if(scenes[name].enter)scenes[name].enter({level:0});scenes[name].draw(context);}
 ['ready','play','pause','over','clear'].forEach(ph=>{M.state().phase=ph;scenes.gioco.draw(context);});
-for(let li=0;li<4;li++){M.build(li);M.state().phase='play';M.state().p.power=2;scenes.gioco.draw(context);}
+for(let li=0;li<G.LEVELS.length;li++){M.build(li);M.state().phase='play';M.state().p.power=2;scenes.gioco.draw(context);}
 console.log('PASS Dino Mario: every level finished by the search bot at both ages, passive player never wins, blocks, melon, stomp, pits, checkpoint retry, save, boss bridge');

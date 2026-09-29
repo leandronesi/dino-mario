@@ -166,10 +166,113 @@
     b.fill(159, 11, 16, 1, 'Z');
     b.e('boss', 169, 10);
     b.ground(175, 189, 11);
-    b.e('lever', 176, 10).e('chick', 184, 10);
+    b.e('lever', 176, 10).e('chick', 184, 10, { col: 4 });
+    b.lv.bridge = { x0: 159, x1: 174, row: 11 };
     L.push(b.lv);
   })();
 
-  G.LEVELS = L;
+  /* ------------------------------------------------------------ pieces
+     The other sixteen levels are composed from pieces, each one already
+     proven: every piece starts and ends on the ground at row 13 unless it is
+     a hole (gap, platGap, drops, trees), and two holes never touch. A piece
+     takes (builder, x, arg) and returns the x where the next one starts. */
+  var K = {
+    start: function (b, x) { b.ground(x, x + 13); return x + 14; },
+    plain: function (b, x, w) { w = w || 8; b.ground(x, x + w - 1); return x + w; },
+    blocks: function (b, x, power) {
+      b.ground(x, x + 15); b.put(x + 3, 9, power ? '?M?' : '?B?'); b.put(x + 9, 9, 'B?B?B'); b.put(x + 11, 5, '?'); b.e('beetle', x + 13);
+      return x + 16;
+    },
+    pipes: function (b, x) {
+      b.ground(x, x + 19); b.pipe(x + 2, 2); b.e('beetle', x + 6); b.pipe(x + 9, 3); b.e('beetle', x + 12, 12, { only: 2 }); b.pipe(x + 15, 4);
+      return x + 20;
+    },
+    gap: function (b, x, w) { w = w || 3; b.fruits(x, 9, w, true); return x + w; },
+    // eight tiles of nothing, and a platform that touches both edges: just step on it
+    platGap: function (b, x) { b.plat(x, 11, 3, 'x', 5, 1.1); b.fruits(x + 2, 8, 4); return x + 8; },
+    stairs: function (b, x) { b.ground(x, x + 13); b.stairs(x + 1, 4, 1); b.stairs(x + 8, 4, -1); return x + 14; },
+    stairsGap: function (b, x) { b.ground(x, x + 5); b.stairs(x + 1, 4, 1); b.fill(x + 5, 9, 1, 4, 'S'); b.ground(x + 8, x + 13); b.stairs(x + 8, 4, -1); return x + 14; },
+    enemies: function (b, x, n) {
+      var w = 6 + 3 * n; b.ground(x, x + w - 1);
+      for (var i = 0; i < n; i++) b.e('beetle', x + 5 + 3 * i, 12, i % 2 ? { only: 2 } : undefined);
+      return x + w;
+    },
+    snails: function (b, x) { b.ground(x, x + 17); b.e('snail', x + 5).e('beetle', x + 10).e('beetle', x + 13).e('beetle', x + 16, 12, { only: 2 }); return x + 18; },
+    bricks: function (b, x) { b.ground(x, x + 15); b.put(x + 3, 9, 'BBB?BBB'); b.fruits(x + 3, 8, 7); b.put(x + 5, 5, 'B?B'); b.e('beetle', x + 12); return x + 16; },
+    birds: function (b, x) { b.ground(x, x + 17); b.e('bird', x + 8, 8).e('bird', x + 15, 7, { only: 2 }); b.fruits(x + 3, 9, 4, true); return x + 18; },
+    hedge: function (b, x) { b.ground(x, x + 13); b.e('hedgehog', x + 6, 12, { alt: 'beetle' }); b.put(x + 9, 9, '?'); return x + 14; },
+    pillars: function (b, x) {
+      b.ground(x, x + 15); b.fill(x + 3, 11, 1, 2, 'S'); b.fill(x + 7, 10, 1, 3, 'S'); b.fill(x + 11, 9, 1, 4, 'S');
+      b.e('beetle', x + 5).e('beetle', x + 9, 12, { only: 2 }); b.fruits(x + 12, 7, 3);
+      return x + 16;
+    },
+    drops: function (b, x) { b.e('drop', x + 1, 14, { only: 2 }); b.fruits(x, 9, 3, true); return x + 3; },
+    // tree tops over the void: gaps of three, never more than two rows up
+    trees: function (b, x, n) {
+      var tops = [11, 10, 9, 10, 11, 10, 9, 10], widths = [5, 4, 5, 4, 5, 4, 5, 4];
+      for (var i = 0; i < n; i++) {
+        x += 3; b.tree(x, widths[i], tops[i]);
+        if (widths[i] === 5 && i % 2 === 0) b.e('beetle', x + 3, tops[i] - 1);
+        else b.fruits(x + 1, tops[i] - 2, 2);
+        x += widths[i];
+      }
+      return x + 3;
+    },
+    spring: function (b, x) {
+      b.ground(x, x + 15); b.set(x + 4, 12, 'J'); b.fill(x + 6, 5, 7, 1, '='); b.fruits(x + 7, 4, 5);
+      return x + 16;
+    },
+    check: function (b, x) { b.ground(x, x + 7); b.checkpoint(x + 3); return x + 8; },
+    end: function (b, x) { b.ground(x, x + 27); b.stairs(x + 2, 6, 1); b.fill(x + 8, 7, 1, 6, 'S'); b.flag(x + 16); return x + 28; },
+    // the castle: the Big Beetle on a bridge, the lever, and a little dino in a cage
+    boss: function (b, x, col) {
+      b.ground(x, x + 2); b.stairs(x + 1, 2, 1); b.ground(x + 3, x + 17, 11);
+      b.fill(x + 18, 11, 16, 1, 'Z'); b.e('boss', x + 28, 10);
+      b.ground(x + 34, x + 48, 11); b.e('lever', x + 35, 10).e('chick', x + 43, 10, { col: col });
+      b.lv.bridge = { x0: x + 18, x1: x + 33, row: 11 };
+      return x + 49;
+    }
+  };
+  function compose(name, theme, list, o) {
+    var b = new Builder(0, name, theme, 460), x = 0;
+    list.forEach(function (it) { var k = typeof it === 'string' ? it : it[0], arg = typeof it === 'string' ? undefined : it[1]; x = K[k](b, x, arg); });
+    b.lv.w = x; b.lv.grid = b.lv.grid.map(function (row) { return row.slice(0, x); });
+    if (o && o.ceiling) b.fill(8, 2, x - 38, 1, 'S');
+    return b.lv;
+  }
+
+  var WORLDS = [
+    { name: 'Il Prato', levels: [L[0],
+      compose('Collina fiorita', 'prato', ['start', ['blocks', 1], ['enemies', 3], ['gap', 2], 'pipes', 'check', 'snails', ['gap', 3], 'stairs', 'bricks', 'spring', 'end']),
+      compose('Ponti sul fiume', 'prato', ['start', 'platGap', 'blocks', ['trees', 3], 'check', 'platGap', ['enemies', 4], ['gap', 3], 'stairsGap', 'end']),
+      compose('Il castello del prato', 'prato', ['start', ['blocks', 1], 'pillars', ['enemies', 3], 'check', 'bricks', ['gap', 3], ['boss', 0]])] },
+    { name: 'La Grotta', levels: [L[1],
+      compose('Cunicoli', 'grotta', ['start', 'bricks', 'pillars', ['enemies', 4], 'check', 'platGap', 'snails', ['blocks', 1], ['gap', 2], 'end'], { ceiling: 1 }),
+      compose('Pozzi profondi', 'grotta', ['start', ['gap', 3], 'pillars', 'platGap', 'check', ['gap', 4], ['enemies', 3], 'platGap', 'stairs', 'end'], { ceiling: 1 }),
+      compose('Il castello di pietra', 'grotta', ['start', ['blocks', 1], 'pillars', 'snails', 'check', 'platGap', ['enemies', 4], ['boss', 1]], { ceiling: 1 })] },
+    { name: 'Gli Alberi', levels: [L[2],
+      compose('Rami alti', 'alberi', ['start', ['trees', 4], 'check', ['trees', 5], 'birds', 'end']),
+      compose('Liane e uccelli', 'alberi', ['start', ['trees', 3], 'platGap', 'birds', 'check', ['trees', 4], 'platGap', 'end']),
+      compose('Il castello sugli alberi', 'alberi', ['start', ['trees', 3], ['blocks', 1], 'check', ['trees', 3], ['boss', 2]])] },
+    { name: 'La Spiaggia', levels: [
+      compose('La spiaggia', 'spiaggia', ['start', ['blocks', 1], ['enemies', 3], ['gap', 2], 'snails', 'check', 'pipes', 'spring', ['gap', 3], 'end']),
+      compose('Scogli', 'spiaggia', ['start', 'pillars', ['gap', 3], 'platGap', 'check', 'drops', ['enemies', 4], 'stairsGap', 'end']),
+      compose('Palme sul mare', 'spiaggia', ['start', ['trees', 4], 'platGap', 'check', ['trees', 4], 'birds', 'end']),
+      compose('Il faro', 'spiaggia', ['start', ['blocks', 1], 'snails', 'check', ['gap', 3], ['enemies', 3], ['boss', 3]])] },
+    { name: 'Il Vulcano', levels: [
+      compose('Cenere', 'vulcano', ['start', ['blocks', 1], 'hedge', 'drops', 'check', 'pillars', ['enemies', 3], 'end']),
+      compose('Fiumi di lava', 'vulcano', ['start', 'drops', 'platGap', 'check', 'drops', 'pillars', 'platGap', 'end']),
+      compose('La montagna di fuoco', 'vulcano', ['start', ['blocks', 1], 'stairsGap', 'hedge', 'check', 'drops', 'snails', 'birds', 'end']),
+      L[3]] }
+  ];
+  var ALL = [];
+  WORLDS.forEach(function (w, wi) {
+    w.levels.forEach(function (lv, ni) { lv.world = wi + 1; lv.num = ni + 1; lv.id = (wi + 1) + '-' + (ni + 1); ALL.push(lv); });
+  });
+  L[3].name = 'Il castello di fuoco';
+
+  G.LEVELS = ALL;
+  G.WORLDS = WORLDS;
+
   G.ROWS = ROWS;
 })();
