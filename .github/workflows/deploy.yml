@@ -30,7 +30,7 @@ jobs:
         run: |
           mkdir -p _site
           cp index.html sw.js manifest.webmanifest _site/
-          cp icon.svg _site/
+          cp icon.svg icon-180.png icon-192.png icon-512.png icon-maskable-512.png _site/
           ls -la _site
           du -sh _site
       - uses: actions/configure-pages@v5
