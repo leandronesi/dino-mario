@@ -1,12 +1,12 @@
 {
-  "name": "Dino Salto",
-  "short_name": "Dino Salto",
+  "name": "Super Dino",
+  "short_name": "Super Dino",
   "description": "Salta sulle piattaforme, schiaccia gli scarabei e arriva alla bandiera.",
   "lang": "it",
   "dir": "ltr",
   "start_url": "./",
   "scope": "./",
-  "id": "/dino-mario/salto",
+  "id": "/dino-mario/super",
   "display": "fullscreen",
   "display_override": [
     "fullscreen",

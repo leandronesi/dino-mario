@@ -1,4 +1,4 @@
-/* Dino Salto — the four levels, written with a tiny builder instead of ASCII
+/* Super Dino — the four levels, written with a tiny builder instead of ASCII
    art: coordinates are tiles (48px), row 0 is the top, the ground's top row is
    13, so a dino standing on the ground has its feet at y = 13 * 48.
 

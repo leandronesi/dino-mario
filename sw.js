@@ -13,7 +13,7 @@
    not answered in NAV_TIMEOUT we serve the cached game and let the download
    finish in the background, so the next launch is fresh. A child must never sit
    in front of a white screen because the router is having a bad day. */
-var CACHE = 'dino-mario-18ea201bd0';
+var CACHE = 'dino-mario-c3a66c9733';
 var NAV_TIMEOUT = 2500;
 var SHELL = [
   './',

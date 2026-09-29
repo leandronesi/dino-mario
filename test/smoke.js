@@ -1,4 +1,4 @@
-/* Dino Salto — collaudo. `node test/smoke.js`
+/* Super Dino — collaudo. `node test/smoke.js`
    The heavy part is a beam search that PLAYS every level through the real
    step(), for both ages: a level only counts as finishable if something that
    presses the same four buttons as a child reaches the flag. Then the passive
@@ -132,4 +132,4 @@ assert.equal(G.LEVELS.length,20);assert.equal(G.LEVELS.filter(l=>l.bridge).lengt
 for(const name of ['accesso','menu','gioco']){if(scenes[name].enter)scenes[name].enter({level:0});scenes[name].draw(context);}
 ['ready','play','pause','over','clear'].forEach(ph=>{M.state().phase=ph;scenes.gioco.draw(context);});
 for(let li=0;li<G.LEVELS.length;li++){M.build(li);M.state().phase='play';M.state().p.power=2;scenes.gioco.draw(context);}
-console.log('PASS Dino Salto: every level finished by the search bot at both ages, passive player never wins, blocks, melon, stomp, pits, checkpoint retry, save, boss bridge');
+console.log('PASS Super Dino: every level finished by the search bot at both ages, passive player never wins, blocks, melon, stomp, pits, checkpoint retry, save, boss bridge');

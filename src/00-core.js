@@ -1,4 +1,4 @@
-/* Dino Salto — core engine (copied from Dino Run).
+/* Super Dino — core engine (copied from Dino Run).
    Fixed 1280x720 logical world, letterboxed. Canvas only, no assets, no deps.
    Everything a scene needs hangs off the global `G`. */
 (function () {

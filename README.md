@@ -1,4 +1,4 @@
-# Dino Salto
+# Super Dino
 
 Platform a scorrimento laterale per bambini, in canvas, senza librerie né
 risorse esterne. Il dino corre, salta, schiaccia gli scarabei, colpisce i
