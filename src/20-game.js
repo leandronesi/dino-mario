@@ -815,10 +815,13 @@
 
   var KEYMAP = { ArrowLeft: 'l', a: 'l', A: 'l', ArrowRight: 'r', d: 'r', D: 'r', ArrowUp: 'j', w: 'j', W: 'j', ' ': 'j', x: 'f', X: 'f', f: 'f', F: 'f', Shift: 'f' };
   window.addEventListener('keydown', function (e) {
-    if (G.current !== 'gioco') return;
-    if (e.key === 'Escape' || e.key === 'p') { action('pause'); return; }
-    if (e.key === 'Enter' && S.phase === 'ready') { start(); return; }
-    var k = KEYMAP[e.key]; if (k) { e.preventDefault(); keys[k] = true; }
+    if (G.current !== 'gioco' || G.overlayOpen() || e.altKey || e.ctrlKey || e.metaKey) return;
+    if (e.key === 'Escape' || e.key === 'p') { if (!e.repeat) action('pause'); return; }
+    var k = KEYMAP[e.key];
+    if (S.phase === 'ready' && (e.key === 'Enter' || k === 'l' || k === 'r' || k === 'j')) {
+      e.preventDefault(); start();
+    }
+    if (k) { e.preventDefault(); keys[k] = true; }
   });
   window.addEventListener('keyup', function (e) { var k = KEYMAP[e.key]; if (k) keys[k] = false; });
   window.addEventListener('blur', function () { keys = {}; touches = {}; });

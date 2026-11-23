@@ -68,7 +68,7 @@ html, body {
 </style>
 </head>
 <body>
-<canvas id="c"></canvas>
+<canvas id="c" tabindex="0" aria-label="Super Dino"></canvas>
 
 <div id="ovl" role="dialog" aria-modal="true">
   <div class="card">
@@ -817,7 +817,12 @@ html, body {
     }
     if (cur && cur.onUp) cur.onUp(p);
   }
-  cv.addEventListener('pointerdown', function (e) { e.preventDefault(); cv.setPointerCapture && cv.setPointerCapture(e.pointerId); onDown(e); });
+  cv.addEventListener('pointerdown', function (e) {
+    e.preventDefault();
+    if (!G.overlayOpen()) cv.focus({ preventScroll: true });
+    cv.setPointerCapture && cv.setPointerCapture(e.pointerId);
+    onDown(e);
+  });
   cv.addEventListener('pointermove', function (e) { e.preventDefault(); onMove(e); });
   cv.addEventListener('pointerup', function (e) { e.preventDefault(); onUp(e); });
   cv.addEventListener('pointercancel', function (e) { pointer.down = false; pressedKey = null; gearHold = 0; if(cur&&cur.onCancel)cur.onCancel();else if (cur && cur.onUp) cur.onUp({ x: pointer.x, y: pointer.y, id: e.pointerId }); });
@@ -2797,10 +2802,13 @@ html, body {
 
   var KEYMAP = { ArrowLeft: 'l', a: 'l', A: 'l', ArrowRight: 'r', d: 'r', D: 'r', ArrowUp: 'j', w: 'j', W: 'j', ' ': 'j', x: 'f', X: 'f', f: 'f', F: 'f', Shift: 'f' };
   window.addEventListener('keydown', function (e) {
-    if (G.current !== 'gioco') return;
-    if (e.key === 'Escape' || e.key === 'p') { action('pause'); return; }
-    if (e.key === 'Enter' && S.phase === 'ready') { start(); return; }
-    var k = KEYMAP[e.key]; if (k) { e.preventDefault(); keys[k] = true; }
+    if (G.current !== 'gioco' || G.overlayOpen() || e.altKey || e.ctrlKey || e.metaKey) return;
+    if (e.key === 'Escape' || e.key === 'p') { if (!e.repeat) action('pause'); return; }
+    var k = KEYMAP[e.key];
+    if (S.phase === 'ready' && (e.key === 'Enter' || k === 'l' || k === 'r' || k === 'j')) {
+      e.preventDefault(); start();
+    }
+    if (k) { e.preventDefault(); keys[k] = true; }
   });
   window.addEventListener('keyup', function (e) { var k = KEYMAP[e.key]; if (k) keys[k] = false; });
   window.addEventListener('blur', function () { keys = {}; touches = {}; });
