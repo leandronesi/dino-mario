@@ -7,8 +7,6 @@
   var C = G.C, W = G.W;
   var CARD = { w: 250, h: 262, y: 206, gap: 20 }, page = -1;
 
-  function saved() { return G.save.mario || (G.save.mario = { open: 0, best: {}, done: {} }); }
-
   function mini(c, lv, x, y, w, h) {
     var th = G.mario.THEME[lv.theme];
     c.save(); G.roundRect(c, x, y, w, h, 20); c.clip();
@@ -39,14 +37,17 @@
 
   G.scene('menu', {
     hud: false, back: false,
-    enter: function () { saved(); },
+    enter: function () {
+      var s = G.mario.saved(), all = G.LEVELS;
+      page = all[Math.min(s.open, all.length - 1)].world - 1;
+    },
     draw: function (c) {
-      var s = saved(), all = G.LEVELS, worlds = G.WORLDS;
+      var s = G.mario.saved(), all = G.LEVELS, worlds = G.WORLDS;
       if (page < 0) page = Math.min(worlds.length - 1, all[Math.min(s.open, all.length - 1)].world - 1);
       var levels = worlds[page].levels, base = all.indexOf(levels[0]);
-      G.mario.background(c, G.mario.THEME.prato, 'prato', G.t * 30);
+      G.mario.background(c, G.mario.THEME[levels[0].theme], levels[0].theme, G.t * 30);
       G.text('SUPER DINO', 640, 104, { size: 84, color: C.cream, stroke: C.leafDeep, strokeWidth: 14 });
-      G.text('Mondo ' + (page + 1) + ' · ' + worlds[page].name, 640, 178, { size: 34, color: C.cream, stroke: C.leafDeep, strokeWidth: 8 });
+      G.text('Mondo ' + (page + 1) + ' di ' + worlds.length + ' · ' + worlds[page].name, 640, 178, { size: 34, color: C.cream, stroke: C.leafDeep, strokeWidth: 8 });
       A.dino(c, 150, 170, 120, { t: G.t, pose: 'happy', color: G.account && G.account.color, hat: null });
       var x0 = (W - (levels.length * CARD.w + (levels.length - 1) * CARD.gap)) / 2;
       levels.forEach(function (lv, j) {

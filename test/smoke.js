@@ -18,6 +18,9 @@ for(const file of fs.readdirSync(dir).filter(f=>f.endsWith('.js')).sort()){
 const G=sandbox.G,M=G.mario,T=48;
 const kid=G.accounts.create({name:'Prova',level:1});G.accounts.login(kid.id);
 const only=process.argv[2];let s0;const CAVE=G.LEVELS.findIndex(l=>l.name==='La Grotta');
+assert.equal(G.LEVELS.length,28);
+assert.equal(G.LEVELS[19].name,'Il castello di fuoco','the original save indices are stable');
+assert.equal(G.WORLDS[5].levels[0].id,'6-1');
 
 // ---- rules are data, no dice
 const gameSrc=fs.readFileSync(path.join(dir,'20-game.js'),'utf8').replace(/\/\*[\s\S]*?\*\//g,'').replace(/\/\/.*$/gm,'');
@@ -119,7 +122,7 @@ const sib=G.accounts.create({name:'Fratello',level:2});G.accounts.login(sib.id);
 G.LEVELS.forEach((lv,li)=>{if(!lv.bridge)return;G.level=2;M.build(li);M.start();s=M.state();s.p.x=(lv.bridge.x1+1)*T;s.p.y=lv.bridge.row*T-s.p.h;play({r:1},20);
   assert.equal(M.state().phase,'bridge',lv.name);play({},60*8);assert.equal(M.state().phase,'clear',lv.name);
   assert(!M.state().ens.some(e=>e.type==='boss'&&!e.dead),'the boss falls with the bridge in '+lv.name);});
-assert.equal(G.LEVELS.length,20);assert.equal(G.LEVELS.filter(l=>l.bridge).length,5,'one castle per world');
+assert.equal(G.LEVELS.filter(l=>l.bridge).length,G.WORLDS.length,'one castle per world');
 
 // ---- the spring throws the dino up to the planks
 {const li=G.LEVELS.findIndex(l=>l.grid[12].includes('J'));G.level=1;M.build(li);M.start();const jx=G.LEVELS[li].grid[12].indexOf('J');s=M.state();s.ens=[];s.p.x=jx*T+9;s.p.y=10*T;let top=1e9;for(let i=0;i<90;i++){M.step({});top=Math.min(top,M.state().p.y);}assert(top<5*T,'the spring must reach the planks: '+top);}
@@ -129,6 +132,12 @@ assert.equal(G.LEVELS.length,20);assert.equal(G.LEVELS.filter(l=>l.bridge).lengt
  const sv=G.save.mario;assert.equal(sv.v,2);assert(sv.done[0]&&sv.done[4],'Prato and Grotta stay done');assert(sv.open>=5,'and what came after them is open: '+sv.open);G.accounts.login(kid.id);}
 
 // ---- scenes draw without throwing
+{
+  G.save.mario={v:2,open:19,done:{19:true},best:{19:9}};
+  scenes.menu.enter();
+  assert.equal(G.save.mario.open,20,'the old finale also unlocks the first new level from the map');
+  assert.equal(G.save.mario.best[19],9);
+}
 for(const name of ['accesso','menu','gioco']){if(scenes[name].enter)scenes[name].enter({level:0});scenes[name].draw(context);}
 ['ready','play','pause','over','clear'].forEach(ph=>{M.state().phase=ph;scenes.gioco.draw(context);});
 for(let li=0;li<G.LEVELS.length;li++){M.build(li);M.state().phase='play';M.state().p.power=2;scenes.gioco.draw(context);}

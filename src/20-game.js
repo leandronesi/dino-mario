@@ -40,6 +40,7 @@
       Object.keys(s.done || {}).forEach(function (k) { done[map[k]] = true; best[map[k]] = (s.best || {})[k] || 0; open = Math.max(open, map[k] + 1); });
       s.done = done; s.best = best; s.open = Math.max(Math.min(open, 19), map[s.open] === undefined ? 0 : Math.min(map[s.open], open)); s.v = 2;
     }
+    if (s.done[19] && s.open < 20) { s.open = 20; G.saveNow(); }
     return s;
   }
 
@@ -441,7 +442,9 @@
     grotta: { sky: ['#1e1b33', '#3b3150'], hill: '#2c2744', hill2: '#3a3358', grass: '#7f8fb8', dirt: '#56607f', dirt2: '#454e6b', liquid: '#2a5c7a' },
     alberi: { sky: ['#ffc98a', '#ffeccb'], hill: '#9bcf8a', hill2: '#78b76c', grass: '#5cbf4f', dirt: '#b9773f', dirt2: '#9a5f30', liquid: '#3fb6c9' },
     spiaggia: { sky: ['#5ccdf2', '#e6f8f4'], hill: '#9fdcef', hill2: '#f0d9a0', grass: '#f7e2a8', dirt: '#e8c27a', dirt2: '#d6a95c', liquid: '#2fb5d9' },
-    vulcano: { sky: ['#3a1622', '#8a3a2a'], hill: '#4a2330', hill2: '#5c2a33', grass: '#e0623a', dirt: '#4a3a3f', dirt2: '#3a2c30', liquid: '#ff7a1a' }
+    vulcano: { sky: ['#3a1622', '#8a3a2a'], hill: '#4a2330', hill2: '#5c2a33', grass: '#e0623a', dirt: '#4a3a3f', dirt2: '#3a2c30', liquid: '#ff7a1a' },
+    neve: { sky: ['#284477', '#95e6f0'], hill: '#9ab8e3', hill2: '#d6ebf5', grass: '#f3fbff', dirt: '#719cc5', dirt2: '#577aa8', liquid: '#56a7cf' },
+    cristalli: { sky: ['#211638', '#53336f'], hill: '#35234c', hill2: '#482a62', grass: '#c7eaff', dirt: '#765a9c', dirt2: '#513b73', liquid: '#9b64dc' }
   };
   function poly(c, pts, col) { c.fillStyle = col; c.beginPath(); pts.forEach(function (p, i) { if (i) c.lineTo(p[0], p[1]); else c.moveTo(p[0], p[1]); }); c.closePath(); c.fill(); }
 
@@ -453,6 +456,20 @@
       c.fillStyle = '#ffb04a33'; c.beginPath(); c.arc(900 - cam * .05, 250, 160, 0, 7); c.fill();
       poly(c, [[620 - cam * .08, 520], [840 - cam * .08, 230], [960 - cam * .08, 230], [1220 - cam * .08, 520]], '#2a1018');
       c.fillStyle = '#ff7a1a'; c.fillRect(846 - cam * .08, 226, 108, 10);
+    } else if (theme === 'neve') {
+      c.strokeStyle = '#a0ffe277'; c.lineWidth = 32; c.beginPath();
+      c.moveTo(-60, 245); c.bezierCurveTo(430 - cam * .08, 35, 710 + cam * .04, 300, W + 60, 90); c.stroke();
+      c.fillStyle = '#f4fdff';
+      for (i = 0; i < 32; i++) {
+        x = ((i * 137 - cam * .14) % W + W) % W;
+        c.beginPath(); c.arc(x, 25 + (i * 79) % 380, 2 + i % 4, 0, 7); c.fill();
+      }
+    } else if (theme === 'cristalli') {
+      for (i = 0; i < 12; i++) {
+        x = ((i * 173 - cam * .25) % 2076 + 2076) % 2076 - 180;
+        var tip = 305 + (i % 4) * 45;
+        poly(c, [[x, 600], [x - 26, tip + 48], [x + 6, tip], [x + 45, tip + 57], [x + 32, 600]], i % 2 ? '#ba74ef85' : '#70e0f685');
+      }
     } else if (theme === 'grotta') {
       for (i = 0; i < 14; i++) { x = ((i * 157 - cam * .3) % 2200 + 2200) % 2200 - 200; poly(c, [[x, 140], [x + 30, 140], [x + 15, 200 + (i % 3) * 30]], '#2c2744'); }
       for (i = 0; i < 10; i++) { x = ((i * 263 - cam * .45) % 2400 + 2400) % 2400 - 200; c.fillStyle = i % 2 ? '#8f5bd666' : '#38d9a966'; poly(c, [[x, 600], [x + 14, 560], [x + 28, 600]], c.fillStyle); }
@@ -813,6 +830,6 @@
     state: function () { return S; }, level: function () { return LV; },
     snap: function () { return JSON.stringify(S); }, load: function (s) { S = JSON.parse(s); LV = G.LEVELS[S.li]; },
     quiet: function (q) { quiet = q; }, tile: function (x, y) { return tile(x, y); }, action: action,
-    drawWorld: function (c) { drawWorld(c); }, draw: function (c) { draw(c); }, background: background, THEME: THEME, T: T
+    drawWorld: function (c) { drawWorld(c); }, draw: function (c) { draw(c); }, background: background, saved: saved, THEME: THEME, T: T
   };
 })();

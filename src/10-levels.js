@@ -263,7 +263,17 @@
       compose('Cenere', 'vulcano', ['start', ['blocks', 1], 'hedge', 'drops', 'check', 'pillars', ['enemies', 3], 'end']),
       compose('Fiumi di lava', 'vulcano', ['start', 'drops', 'platGap', 'check', 'drops', 'pillars', 'platGap', 'end']),
       compose('La montagna di fuoco', 'vulcano', ['start', ['blocks', 1], 'stairsGap', 'hedge', 'check', 'drops', 'snails', 'birds', 'end']),
-      L[3]] }
+      L[3]] },
+    { name: 'Le Montagne di Neve', levels: [
+      compose('Primi fiocchi', 'neve', ['start', ['blocks', 1], 'stairs', 'spring', 'check', ['gap', 2], 'pillars', 'end']),
+      compose('Ponti di ghiaccio', 'neve', ['start', 'platGap', 'bricks', 'stairsGap', 'check', 'platGap', 'birds', 'end']),
+      compose('Il sentiero dell’aurora', 'neve', ['start', 'birds', ['trees', 3], 'check', 'spring', 'pillars', ['gap', 3], 'end']),
+      compose('Il castello di neve', 'neve', ['start', ['blocks', 1], 'pillars', 'check', 'platGap', 'snails', ['boss', 1]])] },
+    { name: 'La Valle dei Cristalli', levels: [
+      compose('Luci sottoterra', 'cristalli', ['start', 'bricks', 'hedge', 'check', 'stairsGap', 'spring', 'birds', 'end'], { ceiling: 1 }),
+      compose('Il fiume viola', 'cristalli', ['start', 'platGap', 'pillars', ['gap', 3], 'check', 'platGap', 'drops', 'stairs', 'end'], { ceiling: 1 }),
+      compose('I rami di quarzo', 'cristalli', ['start', ['trees', 3], 'blocks', 'check', ['trees', 4], 'birds', 'end']),
+      compose('La fortezza di cristallo', 'cristalli', ['start', ['blocks', 1], 'spring', 'hedge', 'check', ['trees', 3], 'pillars', ['boss', 2]])] }
   ];
   var ALL = [];
   WORLDS.forEach(function (w, wi) {

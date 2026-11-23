@@ -1954,7 +1954,17 @@ html, body {
       compose('Cenere', 'vulcano', ['start', ['blocks', 1], 'hedge', 'drops', 'check', 'pillars', ['enemies', 3], 'end']),
       compose('Fiumi di lava', 'vulcano', ['start', 'drops', 'platGap', 'check', 'drops', 'pillars', 'platGap', 'end']),
       compose('La montagna di fuoco', 'vulcano', ['start', ['blocks', 1], 'stairsGap', 'hedge', 'check', 'drops', 'snails', 'birds', 'end']),
-      L[3]] }
+      L[3]] },
+    { name: 'Le Montagne di Neve', levels: [
+      compose('Primi fiocchi', 'neve', ['start', ['blocks', 1], 'stairs', 'spring', 'check', ['gap', 2], 'pillars', 'end']),
+      compose('Ponti di ghiaccio', 'neve', ['start', 'platGap', 'bricks', 'stairsGap', 'check', 'platGap', 'birds', 'end']),
+      compose('Il sentiero dell’aurora', 'neve', ['start', 'birds', ['trees', 3], 'check', 'spring', 'pillars', ['gap', 3], 'end']),
+      compose('Il castello di neve', 'neve', ['start', ['blocks', 1], 'pillars', 'check', 'platGap', 'snails', ['boss', 1]])] },
+    { name: 'La Valle dei Cristalli', levels: [
+      compose('Luci sottoterra', 'cristalli', ['start', 'bricks', 'hedge', 'check', 'stairsGap', 'spring', 'birds', 'end'], { ceiling: 1 }),
+      compose('Il fiume viola', 'cristalli', ['start', 'platGap', 'pillars', ['gap', 3], 'check', 'platGap', 'drops', 'stairs', 'end'], { ceiling: 1 }),
+      compose('I rami di quarzo', 'cristalli', ['start', ['trees', 3], 'blocks', 'check', ['trees', 4], 'birds', 'end']),
+      compose('La fortezza di cristallo', 'cristalli', ['start', ['blocks', 1], 'spring', 'hedge', 'check', ['trees', 3], 'pillars', ['boss', 2]])] }
   ];
   var ALL = [];
   WORLDS.forEach(function (w, wi) {
@@ -2012,6 +2022,7 @@ html, body {
       Object.keys(s.done || {}).forEach(function (k) { done[map[k]] = true; best[map[k]] = (s.best || {})[k] || 0; open = Math.max(open, map[k] + 1); });
       s.done = done; s.best = best; s.open = Math.max(Math.min(open, 19), map[s.open] === undefined ? 0 : Math.min(map[s.open], open)); s.v = 2;
     }
+    if (s.done[19] && s.open < 20) { s.open = 20; G.saveNow(); }
     return s;
   }
 
@@ -2413,7 +2424,9 @@ html, body {
     grotta: { sky: ['#1e1b33', '#3b3150'], hill: '#2c2744', hill2: '#3a3358', grass: '#7f8fb8', dirt: '#56607f', dirt2: '#454e6b', liquid: '#2a5c7a' },
     alberi: { sky: ['#ffc98a', '#ffeccb'], hill: '#9bcf8a', hill2: '#78b76c', grass: '#5cbf4f', dirt: '#b9773f', dirt2: '#9a5f30', liquid: '#3fb6c9' },
     spiaggia: { sky: ['#5ccdf2', '#e6f8f4'], hill: '#9fdcef', hill2: '#f0d9a0', grass: '#f7e2a8', dirt: '#e8c27a', dirt2: '#d6a95c', liquid: '#2fb5d9' },
-    vulcano: { sky: ['#3a1622', '#8a3a2a'], hill: '#4a2330', hill2: '#5c2a33', grass: '#e0623a', dirt: '#4a3a3f', dirt2: '#3a2c30', liquid: '#ff7a1a' }
+    vulcano: { sky: ['#3a1622', '#8a3a2a'], hill: '#4a2330', hill2: '#5c2a33', grass: '#e0623a', dirt: '#4a3a3f', dirt2: '#3a2c30', liquid: '#ff7a1a' },
+    neve: { sky: ['#284477', '#95e6f0'], hill: '#9ab8e3', hill2: '#d6ebf5', grass: '#f3fbff', dirt: '#719cc5', dirt2: '#577aa8', liquid: '#56a7cf' },
+    cristalli: { sky: ['#211638', '#53336f'], hill: '#35234c', hill2: '#482a62', grass: '#c7eaff', dirt: '#765a9c', dirt2: '#513b73', liquid: '#9b64dc' }
   };
   function poly(c, pts, col) { c.fillStyle = col; c.beginPath(); pts.forEach(function (p, i) { if (i) c.lineTo(p[0], p[1]); else c.moveTo(p[0], p[1]); }); c.closePath(); c.fill(); }
 
@@ -2425,6 +2438,20 @@ html, body {
       c.fillStyle = '#ffb04a33'; c.beginPath(); c.arc(900 - cam * .05, 250, 160, 0, 7); c.fill();
       poly(c, [[620 - cam * .08, 520], [840 - cam * .08, 230], [960 - cam * .08, 230], [1220 - cam * .08, 520]], '#2a1018');
       c.fillStyle = '#ff7a1a'; c.fillRect(846 - cam * .08, 226, 108, 10);
+    } else if (theme === 'neve') {
+      c.strokeStyle = '#a0ffe277'; c.lineWidth = 32; c.beginPath();
+      c.moveTo(-60, 245); c.bezierCurveTo(430 - cam * .08, 35, 710 + cam * .04, 300, W + 60, 90); c.stroke();
+      c.fillStyle = '#f4fdff';
+      for (i = 0; i < 32; i++) {
+        x = ((i * 137 - cam * .14) % W + W) % W;
+        c.beginPath(); c.arc(x, 25 + (i * 79) % 380, 2 + i % 4, 0, 7); c.fill();
+      }
+    } else if (theme === 'cristalli') {
+      for (i = 0; i < 12; i++) {
+        x = ((i * 173 - cam * .25) % 2076 + 2076) % 2076 - 180;
+        var tip = 305 + (i % 4) * 45;
+        poly(c, [[x, 600], [x - 26, tip + 48], [x + 6, tip], [x + 45, tip + 57], [x + 32, 600]], i % 2 ? '#ba74ef85' : '#70e0f685');
+      }
     } else if (theme === 'grotta') {
       for (i = 0; i < 14; i++) { x = ((i * 157 - cam * .3) % 2200 + 2200) % 2200 - 200; poly(c, [[x, 140], [x + 30, 140], [x + 15, 200 + (i % 3) * 30]], '#2c2744'); }
       for (i = 0; i < 10; i++) { x = ((i * 263 - cam * .45) % 2400 + 2400) % 2400 - 200; c.fillStyle = i % 2 ? '#8f5bd666' : '#38d9a966'; poly(c, [[x, 600], [x + 14, 560], [x + 28, 600]], c.fillStyle); }
@@ -2785,7 +2812,7 @@ html, body {
     state: function () { return S; }, level: function () { return LV; },
     snap: function () { return JSON.stringify(S); }, load: function (s) { S = JSON.parse(s); LV = G.LEVELS[S.li]; },
     quiet: function (q) { quiet = q; }, tile: function (x, y) { return tile(x, y); }, action: action,
-    drawWorld: function (c) { drawWorld(c); }, draw: function (c) { draw(c); }, background: background, THEME: THEME, T: T
+    drawWorld: function (c) { drawWorld(c); }, draw: function (c) { draw(c); }, background: background, saved: saved, THEME: THEME, T: T
   };
 })();
 
@@ -2799,8 +2826,6 @@ html, body {
   'use strict';
   var C = G.C, W = G.W;
   var CARD = { w: 250, h: 262, y: 206, gap: 20 }, page = -1;
-
-  function saved() { return G.save.mario || (G.save.mario = { open: 0, best: {}, done: {} }); }
 
   function mini(c, lv, x, y, w, h) {
     var th = G.mario.THEME[lv.theme];
@@ -2832,14 +2857,17 @@ html, body {
 
   G.scene('menu', {
     hud: false, back: false,
-    enter: function () { saved(); },
+    enter: function () {
+      var s = G.mario.saved(), all = G.LEVELS;
+      page = all[Math.min(s.open, all.length - 1)].world - 1;
+    },
     draw: function (c) {
-      var s = saved(), all = G.LEVELS, worlds = G.WORLDS;
+      var s = G.mario.saved(), all = G.LEVELS, worlds = G.WORLDS;
       if (page < 0) page = Math.min(worlds.length - 1, all[Math.min(s.open, all.length - 1)].world - 1);
       var levels = worlds[page].levels, base = all.indexOf(levels[0]);
-      G.mario.background(c, G.mario.THEME.prato, 'prato', G.t * 30);
+      G.mario.background(c, G.mario.THEME[levels[0].theme], levels[0].theme, G.t * 30);
       G.text('SUPER DINO', 640, 104, { size: 84, color: C.cream, stroke: C.leafDeep, strokeWidth: 14 });
-      G.text('Mondo ' + (page + 1) + ' · ' + worlds[page].name, 640, 178, { size: 34, color: C.cream, stroke: C.leafDeep, strokeWidth: 8 });
+      G.text('Mondo ' + (page + 1) + ' di ' + worlds.length + ' · ' + worlds[page].name, 640, 178, { size: 34, color: C.cream, stroke: C.leafDeep, strokeWidth: 8 });
       A.dino(c, 150, 170, 120, { t: G.t, pose: 'happy', color: G.account && G.account.color, hat: null });
       var x0 = (W - (levels.length * CARD.w + (levels.length - 1) * CARD.gap)) / 2;
       levels.forEach(function (lv, j) {

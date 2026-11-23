@@ -2,7 +2,7 @@
 
 Platform a scorrimento laterale per bambini, in canvas, senza librerie né
 risorse esterne. Il dino corre, salta, schiaccia gli scarabei, colpisce i
-blocchi `?` da sotto e arriva alla bandiera. **Venti livelli in cinque mondi**
+blocchi `?` da sotto e arriva alla bandiera. **Ventotto livelli in sette mondi**
 da quattro, che si aprono uno dopo l'altro: **Il Prato**, **La Grotta**, **Gli Alberi**,
 **La Spiaggia**, **Il Vulcano**. Il quarto livello di ogni mondo è un castello: il
 Grande Scarabeo sul ponte, la leva che lo fa crollare e un piccolo dino da
@@ -41,7 +41,7 @@ I livelli stanno in `src/10-levels.js`: quattro disegnati a mano col costruttore
 (1-1, 2-1, 3-1, 5-4) e sedici composti da **pezzi** collaudati (`K`: blocchi, tubi,
 buche, piattaforme mobili, alberi, scale, molla, castello). Il collaudo lento
 esiste per questo: se un livello modificato non si può più finire, `test/smoke.js`
-lo dice. Circa 7 minuti per i venti livelli alle due età.
+lo dice. Il collaudo percorre tutti i livelli alle due età.
 
 Per rigenerare le icone PNG da `icon.svg`: `node tools/icons.js`.
 
